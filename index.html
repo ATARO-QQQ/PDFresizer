@@ -4,11 +4,11 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>PDF Resizer CUI Tool</title>
+        <title>PDF Resizer CUI Tool (Ultra Precision)</title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
         <style>
             :root {
-                --bg-color: #0d0d0d;
+                --bg-color: #0b0d0e;
                 --text-color: #00ff66;
                 --font-family: "Courier New", Courier, "Lucida Console", Monaco, monospace;
             }
@@ -29,6 +29,10 @@
                 --text-color: #e0e0e0;
             }
 
+            body.theme-matrix {
+                --text-color: #20c20e;
+            }
+
             * {
                 box-sizing: border-box;
                 margin: 0;
@@ -42,8 +46,8 @@
                 background-color: var(--bg-color);
                 color: var(--text-color);
                 font-family: var(--font-family);
-                font-size: 14px;
-                line-height: 1.4;
+                font-size: 13.5px;
+                line-height: 1.45;
                 overflow: hidden;
             }
 
@@ -52,7 +56,7 @@
                 flex-direction: column;
                 width: 100%;
                 height: 100vh;
-                padding: 12px;
+                padding: 14px;
                 overflow-y: auto;
                 word-break: break-all;
             }
@@ -69,7 +73,7 @@
             .command-line {
                 display: flex;
                 align-items: center;
-                margin-top: 4px;
+                margin-top: 6px;
             }
 
             .prompt {
@@ -85,7 +89,7 @@
                 outline: none;
                 color: var(--text-color);
                 font-family: var(--font-family);
-                font-size: 14px;
+                font-size: 13.5px;
                 width: 100%;
                 caret-color: var(--text-color);
             }
@@ -95,7 +99,7 @@
             }
 
             .text-dim {
-                opacity: 0.7;
+                opacity: 0.65;
             }
 
             .text-error {
@@ -108,6 +112,11 @@
 
             .text-success {
                 color: #55ff55;
+            }
+
+            .text-highlight {
+                color: #ffffff;
+                text-decoration: underline;
             }
 
             #file-input {
@@ -126,30 +135,43 @@
         </div>
         <input type="file" id="file-input" accept="application/pdf" />
         <script>
-            const MM_TO_PT = 72.0 / 25.4; 
-            const PT_TO_MM = 25.4 / 72.0;
+            const MM_TO_PT = 360.0 / 127.0; 
+            const PT_TO_MM = 127.0 / 360.0;
             const PRESETS = {
-                'a0': [841.0, 1189.0],
-                'a1': [594.0, 841.0],
-                'a2': [420.0, 594.0],
-                'a3': [297.0, 420.0],
-                'a4': [210.0, 297.0],
-                'a5': [148.0, 210.0],
-                'a6': [105.0, 148.0],
-                'b0': [1000.0, 1414.0],
-                'b1': [707.0, 1000.0],
-                'b2': [500.0, 707.0],
-                'b3': [353.0, 500.0],
-                'b4': [250.0, 353.0],
-                'b5': [176.0, 250.0],
-                'letter': [215.9, 279.4],
-                'legal': [215.9, 355.6],
-                'tabloid': [279.4, 431.8]
+                'a0': [841.0, 1189.0, 'ISO A0 Standard'],
+                'a1': [594.0, 841.0, 'ISO A1 Standard'],
+                'a2': [420.0, 594.0, 'ISO A2 Standard'],
+                'a3': [297.0, 420.0, 'ISO A3 Standard'],
+                'a4': [210.0, 297.0, 'ISO A4 Standard'],
+                'a5': [148.0, 210.0, 'ISO A5 Standard'],
+                'a6': [105.0, 148.0, 'ISO A6 Standard'],
+                'jis-b0': [1030.0, 1456.0, 'JIS B0 (Japan)'],
+                'jis-b1': [728.0, 1030.0, 'JIS B1 (Japan)'],
+                'jis-b2': [515.0, 728.0, 'JIS B2 (Japan)'],
+                'jis-b3': [364.0, 515.0, 'JIS B3 (Japan)'],
+                'jis-b4': [257.0, 364.0, 'JIS B4 (Japan Standard)'],
+                'jis-b5': [182.0, 257.0, 'JIS B5 (Japan Standard)'],
+                'jis-b6': [128.0, 182.0, 'JIS B6 (Japan)'],
+                'b4': [257.0, 364.0, 'JIS B4 Standard'],
+                'b5': [182.0, 257.0, 'JIS B5 Standard'],
+                'iso-b0': [1000.0, 1414.0, 'ISO B0 International'],
+                'iso-b1': [707.0, 1000.0, 'ISO B1 International'],
+                'iso-b2': [500.0, 707.0, 'ISO B2 International'],
+                'iso-b3': [353.0, 500.0, 'ISO B3 International'],
+                'iso-b4': [250.0, 353.0, 'ISO B4 International'],
+                'iso-b5': [176.0, 250.0, 'ISO B5 International'],
+                'letter': [215.9, 279.4, 'US Letter (8.5 x 11 in)'],
+                'legal': [215.9, 355.6, 'US Legal (8.5 x 14 in)'],
+                'tabloid': [279.4, 431.8, 'US Tabloid / Ledger (11 x 17 in)'],
+                'executive': [184.15, 266.7, 'US Executive'],
+                'postcard': [100.0, 148.0, 'Japanese Postcard (Hagaki)'],
+                'business-card': [91.0, 55.0, 'Japanese Business Card (Meishi)']
             };
             const COMMAND_LIST = [
-                'help', 'upload', 'open', 'info', 'set', 'preset', 
-                'mode', 'status', 'convert', 'run', 'download', 'save', 
-                'clear', 'cls', 'theme', 'history', 'about'
+                'help', 'open', 'upload', 'info', 'inspect', 'size', 'set', 
+                'preset', 'presets', 'adjust', 'calibrate', 'rotate', 'scale', 
+                'mode', 'boxes', 'unit', 'status', 'convert', 'run', 'download', 
+                'save', 'reset', 'clear', 'cls', 'theme', 'history', 'about'
             ];
             let pdfState = {
                 file: null,
@@ -158,9 +180,14 @@
                 pdfDoc: null,
                 pageCount: 0,
                 originalPages: [], 
-                targetWidthMm: 210.0,  
-                targetHeightMm: 297.0, 
-                fitMode: 'fit',        
+                targetWidthMm: 210.0,   
+                targetHeightMm: 297.0,  
+                adjustWidthMm: 0.0,     
+                adjustHeightMm: 0.0,    
+                rotation: 0,            
+                fitMode: 'fit',         
+                syncBoxes: true,        
+                displayUnit: 'mm',      
                 processedBytes: null
             };
             let commandHistory = [];
@@ -184,7 +211,7 @@
                     if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
                         await loadPdfFile(file);
                     } else {
-                        printLine('Error: Invalid file type. Please drop a PDF file.', 'text-error');
+                        printLine('ERROR: Invalid file type. Please drop a valid PDF file.', 'text-error');
                     }
                 }
             });
@@ -226,10 +253,11 @@
             });
             function printBanner() {
                 printLine("==========================================================================");
-                printLine("           PDF RESIZER CUI UTILITY v1.0.0 (High Precision)");
+                printLine("      PDF RESIZER CUI UTILITY v2.0.0 (Ultra High Precision Engine)");
                 printLine("==========================================================================");
-                printLine("Type 'help' to see all available commands.");
-                printLine("You can also drag & drop a PDF file anywhere on this screen.");
+                printLine("Zero-margin millimeter precision calibrated for Acrobat & Print Output.");
+                printLine("Type 'help' to view command options, or 'size' / 'presets' to set dimensions.");
+                printLine("Drag and drop a PDF file here or type 'open' to load a file.");
                 printLine("");
             }
             async function executeCommand(rawCmd) {
@@ -241,32 +269,63 @@
                     case '?':
                         showHelp();
                         break;
-                    case 'upload':
                     case 'open':
+                    case 'upload':
                         fileInput.click();
                         break;
                     case 'info':
                         showInfo();
                         break;
+                    case 'inspect':
+                        inspectPdfBoxes();
+                        break;
+                    case 'size':
                     case 'set':
-                        setCustomDimension(args);
+                    case 'resize':
+                        setSize(args);
                         break;
                     case 'preset':
-                        setPresetDimension(args);
+                    case 'presets':
+                        showOrSetPreset(args);
+                        break;
+                    case 'adjust':
+                    case 'calibrate':
+                    case 'fine':
+                        adjustDimension(args);
+                        break;
+                    case 'rotate':
+                    case 'orientation':
+                        setRotation(args);
+                        break;
+                    case 'scale':
+                    case 'zoom':
+                        scaleDimension(args);
                         break;
                     case 'mode':
                         setFitMode(args);
+                        break;
+                    case 'boxes':
+                        setSyncBoxes(args);
+                        break;
+                    case 'unit':
+                    case 'units':
+                        setDisplayUnit(args);
                         break;
                     case 'status':
                         showStatus();
                         break;
                     case 'convert':
                     case 'run':
+                    case 'process':
                         await convertPdf();
                         break;
                     case 'download':
                     case 'save':
+                    case 'export':
                         downloadPdf(args);
+                        break;
+                    case 'reset':
+                        resetState();
                         break;
                     case 'clear':
                     case 'cls':
@@ -282,30 +341,36 @@
                         showAbout();
                         break;
                     default:
-                        printLine(`Command not found: '${cmd}'. Type 'help' for command list.`, 'text-error');
+                        printLine(`Unknown command: '${cmd}'. Type 'help' for available commands.`, 'text-error');
                         break;
                 }
             }
             function showHelp() {
-                printLine("AVAILABLE COMMANDS:", "text-bold");
-                printLine("  upload / open           Open file picker to load a PDF file.");
-                printLine("  info                    Display detailed information of the loaded PDF.");
-                printLine("  set <w_mm> <h_mm>       Set target dimensions in millimeters (e.g. set 210 297).");
-                printLine("  preset <name>           Apply a preset standard paper size.");
-                printLine("                          Presets: A0-A6, B0-B5, letter, legal, tabloid.");
-                printLine("  mode [fit|stretch|center]");
-                printLine("                          Set resizing strategy:");
-                printLine("                          - fit: Maintain aspect ratio with margins (default)");
-                printLine("                          - stretch: Force stretch to target aspect ratio");
-                printLine("                          - center: Maintain original size, place in center");
-                printLine("  status                  Show current loaded file and target configuration.");
-                printLine("  convert / run           Perform high-precision PDF page resizing.");
-                printLine("  download [filename]     Download the converted PDF file.");
-                printLine("  clear / cls             Clear terminal screen.");
-                printLine("  theme [color]           Change UI theme (green, amber, cyan, white).");
-                printLine("  history                 Display typed command history.");
-                printLine("  about                   Show tool specifications and precision details.");
-                printLine("  help / ?                Show this help command list.");
+                printLine("COMMAND SUMMARY:", "text-bold");
+                printLine("  FILE OPERATIONS:");
+                printLine("    open / upload               Open browser dialog to select PDF.");
+                printLine("    info                        Display file summary and page count.");
+                printLine("    inspect                     Deep inspection of PDF CropBox/MediaBox.");
+                printLine("");
+                printLine("  DIMENSION & SIZE CONTROLS:");
+                printLine("    size <w> <h>                Set width and height in mm (e.g. size 210 297).");
+                printLine("    size <preset_name>          Set preset size directly (e.g. size jis-b5, size a4).");
+                printLine("    presets                     List all available preset dimensions (JIS, ISO, US).");
+                printLine("    adjust <w_offset> <h_offset> Fine-tune dimensions in +/- mm (e.g. adjust -0.1 +0.2).");
+                printLine("    scale <percentage>          Scale current target size by % (e.g. scale 105%).");
+                printLine("    rotate <0|90|180|270|land|port> Rotate page orientation.");
+                printLine("    mode <fit|stretch|center>   Set scaling mode (default: fit).");
+                printLine("    boxes <on|off>              Synchronize Media/Crop/Trim/Bleed boxes for 0-error.");
+                printLine("    unit <mm|pt|in>             Change measurement display unit.");
+                printLine("");
+                printLine("  EXECUTION & SYSTEM:");
+                printLine("    status                      Show complete current configuration.");
+                printLine("    convert / run               Perform ultra-high-precision PDF resizing.");
+                printLine("    download [filename]         Save converted PDF to computer.");
+                printLine("    reset                       Reset target settings to default A4.");
+                printLine("    clear / cls                 Clear command window.");
+                printLine("    theme <green|amber|cyan|white|matrix> Change terminal color scheme.");
+                printLine("    about                       View precision calibration specs.");
                 printLine("");
             }
             async function loadPdfFile(file) {
@@ -318,11 +383,15 @@
                     for (let i = 0; i < pageCount; i++) {
                         const page = pdfDoc.getPage(i);
                         const { width, height } = page.getSize();
+                        const cropBox = page.getCropBox() || { x: 0, y: 0, width, height };
+                        const mediaBox = page.getMediaBox() || { x: 0, y: 0, width, height };
                         originalPages.push({
                             widthPt: width,
                             heightPt: height,
                             widthMm: width * PT_TO_MM,
-                            heightMm: height * PT_TO_MM
+                            heightMm: height * PT_TO_MM,
+                            cropBox,
+                            mediaBox
                         });
                     }
                     pdfState.file = file;
@@ -332,110 +401,284 @@
                     pdfState.pageCount = pageCount;
                     pdfState.originalPages = originalPages;
                     pdfState.processedBytes = null;
-                    printLine(`SUCCESS: File loaded successfully!`, 'text-success');
-                    printLine(`  Filename: ${file.name}`);
-                    printLine(`  Pages:    ${pageCount}`);
+                    printLine(`SUCCESS: File loaded!`, 'text-success');
+                    printLine(`  Filename:   ${file.name}`);
+                    printLine(`  Page Count: ${pageCount}`);
                     if (pageCount > 0) {
                         const p1 = originalPages[0];
-                        printLine(`  Page 1:   ${p1.widthMm.toFixed(2)} mm x ${p1.heightMm.toFixed(2)} mm (${p1.widthPt.toFixed(2)} pt x ${p1.heightPt.toFixed(2)} pt)`);
+                        printLine(`  Page 1 Size: ${p1.widthMm.toFixed(3)} mm x ${p1.heightMm.toFixed(3)} mm`);
                     }
-                    printLine(`Current target set to: ${pdfState.targetWidthMm.toFixed(2)} mm x ${pdfState.targetHeightMm.toFixed(2)} mm`);
-                    printLine(`Type 'convert' to process this file.`);
+                    const finalW = pdfState.targetWidthMm + pdfState.adjustWidthMm;
+                    const finalH = pdfState.targetHeightMm + pdfState.adjustHeightMm;
+                    printLine(`Target Output: ${finalW.toFixed(2)} mm x ${finalH.toFixed(2)} mm (Box sync: ${pdfState.syncBoxes ? 'ON' : 'OFF'})`);
+                    printLine(`Type 'convert' to process.`);
                 } catch (err) {
-                    printLine(`ERROR: Failed to load PDF file. ${err.message}`, 'text-error');
+                    printLine(`ERROR: Could not parse PDF file. ${err.message}`, 'text-error');
                 }
                 printLine("");
             }
             function showInfo() {
                 if (!pdfState.pdfDoc) {
-                    printLine("ERROR: No PDF file loaded. Use 'upload' or drop a PDF file.", "text-error");
+                    printLine("ERROR: No PDF file loaded. Type 'open' or drop a PDF file.", "text-error");
                     return;
                 }
-                printLine("PDF FILE INFORMATION:", "text-bold");
-                printLine(`  Filename:  ${pdfState.fileName}`);
-                printLine(`  File Size: ${(pdfState.file.size / 1024).toFixed(2)} KB`);
-                printLine(`  Page Count: ${pdfState.pageCount}`);
-                printLine("  PAGE DIMENSIONS:");
-                const limit = Math.min(pdfState.pageCount, 10);
+                printLine("PDF FILE DETAILS:", "text-bold");
+                printLine(`  File Name:   ${pdfState.fileName}`);
+                printLine(`  File Size:   ${(pdfState.file.size / 1024).toFixed(2)} KB`);
+                printLine(`  Total Pages: ${pdfState.pageCount}`);
+                printLine("");
+            }
+            function inspectPdfBoxes() {
+                if (!pdfState.pdfDoc) {
+                    printLine("ERROR: No PDF file loaded.", "text-error");
+                    return;
+                }
+                printLine("PDF INTERNAL BOUNDING BOX INSPECTION:", "text-bold");
+                const limit = Math.min(pdfState.pageCount, 5);
                 for (let i = 0; i < limit; i++) {
                     const p = pdfState.originalPages[i];
-                    printLine(`    Page ${i + 1}: ${p.widthMm.toFixed(2)} mm x ${p.heightMm.toFixed(2)} mm  (${p.widthPt.toFixed(2)} pt x ${p.heightPt.toFixed(2)} pt)`);
+                    printLine(`  [Page ${i + 1}]`);
+                    printLine(`    Page Size: ${p.widthMm.toFixed(3)} mm x ${p.heightMm.toFixed(3)} mm (${p.widthPt.toFixed(2)} pt x ${p.heightPt.toFixed(2)} pt)`);
+                    printLine(`    MediaBox:  x=${p.mediaBox.x}, y=${p.mediaBox.y}, w=${p.mediaBox.width.toFixed(2)}, h=${p.mediaBox.height.toFixed(2)}`);
+                    printLine(`    CropBox:   x=${p.cropBox.x}, y=${p.cropBox.y}, w=${p.cropBox.width.toFixed(2)}, h=${p.cropBox.height.toFixed(2)}`);
                 }
-                if (pdfState.pageCount > 10) {
-                    printLine(`    ... and ${pdfState.pageCount - 10} more pages.`);
+                if (pdfState.pageCount > 5) {
+                    printLine(`  ... (${pdfState.pageCount - 5} additional pages omitted)`);
                 }
                 printLine("");
             }
-            function setCustomDimension(args) {
-                if (args.length < 2) {
-                    printLine("ERROR: Usage: set <width_mm> <height_mm>", "text-error");
-                    printLine("Example: set 210 297", "text-dim");
+            function setSize(args) {
+                if (args.length === 0) {
+                    const finalW = pdfState.targetWidthMm + pdfState.adjustWidthMm;
+                    const finalH = pdfState.targetHeightMm + pdfState.adjustHeightMm;
+                    printLine(`Current Target Dimension: ${finalW.toFixed(2)} mm x ${finalH.toFixed(2)} mm`);
+                    printLine("Usage: size <width_mm> <height_mm>  OR  size <preset_name>", "text-dim");
                     return;
                 }
-                const w = parseFloat(args[0]);
-                const h = parseFloat(args[1]);
-                if (isNaN(w) || isNaN(h) || w <= 0 || h <= 0) {
-                    printLine("ERROR: Dimensions must be positive numbers.", "text-error");
-                    return;
+                if (args.length === 1) {
+                    const key = args[0].toLowerCase();
+                    if (PRESETS[key]) {
+                        setPresetByKey(key);
+                        return;
+                    }
                 }
-                pdfState.targetWidthMm = w;
-                pdfState.targetHeightMm = h;
-                printLine(`Target dimension set to: ${w.toFixed(2)} mm x ${h.toFixed(2)} mm`, "text-success");
-                printLine(`Equivalent Point size: ${(w * MM_TO_PT).toFixed(4)} pt x ${(h * MM_TO_PT).toFixed(4)} pt`);
-                printLine("");
-            }
-            function setPresetDimension(args) {
-                if (args.length < 1) {
-                    printLine("ERROR: Usage: preset <preset_name>", "text-error");
-                    printLine("Available presets: " + Object.keys(PRESETS).join(', '), "text-dim");
-                    return;
-                }
-                const presetKey = args[0].toLowerCase();
-                if (PRESETS[presetKey]) {
-                    const [w, h] = PRESETS[presetKey];
+                if (args.length >= 2) {
+                    const w = parseFloat(args[0]);
+                    const h = parseFloat(args[1]);
+                    if (isNaN(w) || isNaN(h) || w <= 0 || h <= 0) {
+                        printLine("ERROR: Dimensions must be positive numbers.", "text-error");
+                        return;
+                    }
                     pdfState.targetWidthMm = w;
                     pdfState.targetHeightMm = h;
-                    printLine(`Preset [${presetKey.toUpperCase()}] applied: ${w.toFixed(2)} mm x ${h.toFixed(2)} mm`, "text-success");
-                } else {
-                    printLine(`ERROR: Unknown preset '${args[0]}'.`, "text-error");
-                    printLine("Available presets: " + Object.keys(PRESETS).join(', '), "text-dim");
+                    reportTargetUpdated();
+                    return;
                 }
-                printLine("");
+                printLine("ERROR: Invalid arguments for 'size'. Type 'presets' for standard sizes.", "text-error");
+            }
+            function showOrSetPreset(args) {
+                if (args.length === 0) {
+                    printLine("AVAILABLE PRESET SIZES:", "text-bold");
+                    printLine("  [JIS B-Series - Standard Japan Printing]");
+                    printLine("    jis-b4      : 257.0 x 364.0 mm  (or 'b4')");
+                    printLine("    jis-b5      : 182.0 x 257.0 mm  (or 'b5')");
+                    printLine("    jis-b0..b6  : Full JIS B series");
+                    printLine("");
+                    printLine("  [ISO A-Series]");
+                    printLine("    a3          : 297.0 x 420.0 mm");
+                    printLine("    a4          : 210.0 x 297.0 mm");
+                    printLine("    a5          : 148.0 x 210.0 mm");
+                    printLine("    a0..a6      : Full ISO A series");
+                    printLine("");
+                    printLine("  [ISO B-Series International]");
+                    printLine("    iso-b4      : 250.0 x 353.0 mm");
+                    printLine("    iso-b5      : 176.0 x 250.0 mm");
+                    printLine("");
+                    printLine("  [US / ANSI & Special]");
+                    printLine("    letter      : 215.9 x 279.4 mm");
+                    printLine("    legal       : 215.9 x 355.6 mm");
+                    printLine("    tabloid     : 279.4 x 431.8 mm");
+                    printLine("    postcard    : 100.0 x 148.0 mm");
+                    printLine("    business-card : 91.0 x 55.0 mm");
+                    printLine("");
+                    printLine("To apply, type: size <preset_name> (e.g. size jis-b5)", "text-dim");
+                    printLine("");
+                    return;
+                }
+                const key = args[0].toLowerCase();
+                if (PRESETS[key]) {
+                    setPresetByKey(key);
+                } else {
+                    printLine(`ERROR: Preset '${args[0]}' not found. Type 'presets' for list.`, "text-error");
+                }
+            }
+            function setPresetByKey(key) {
+                const [w, h, desc] = PRESETS[key];
+                pdfState.targetWidthMm = w;
+                pdfState.targetHeightMm = h;
+                printLine(`Preset applied: [${key.toUpperCase()}] (${desc})`, "text-success");
+                reportTargetUpdated();
+            }
+            function adjustDimension(args) {
+                if (args.length < 2) {
+                    printLine(`Current Calibration Offset: W=${pdfState.adjustWidthMm >= 0 ? '+' : ''}${pdfState.adjustWidthMm.toFixed(2)} mm, H=${pdfState.adjustHeightMm >= 0 ? '+' : ''}${pdfState.adjustHeightMm.toFixed(2)} mm`);
+                    printLine("Usage: adjust <w_offset_mm> <h_offset_mm>", "text-dim");
+                    printLine("Example: adjust +0.2 -0.1", "text-dim");
+                    return;
+                }
+                const adjW = parseFloat(args[0]);
+                const adjH = parseFloat(args[1]);
+                if (isNaN(adjW) || isNaN(adjH)) {
+                    printLine("ERROR: Adjustment values must be numbers.", "text-error");
+                    return;
+                }
+                pdfState.adjustWidthMm = adjW;
+                pdfState.adjustHeightMm = adjH;
+                printLine("Calibration offsets updated.", "text-success");
+                reportTargetUpdated();
+            }
+            function setRotation(args) {
+                if (args.length < 1) {
+                    printLine(`Current Rotation: ${pdfState.rotation} degrees`);
+                    printLine("Usage: rotate <0|90|180|270|landscape|portrait>", "text-dim");
+                    return;
+                }
+                const arg = args[0].toLowerCase();
+                if (arg === 'landscape' || arg === 'land') {
+                    if (pdfState.targetWidthMm < pdfState.targetHeightMm) {
+                        const temp = pdfState.targetWidthMm;
+                        pdfState.targetWidthMm = pdfState.targetHeightMm;
+                        pdfState.targetHeightMm = temp;
+                    }
+                    printLine("Switched to Landscape orientation.", "text-success");
+                } else if (arg === 'portrait' || arg === 'port') {
+                    if (pdfState.targetWidthMm > pdfState.targetHeightMm) {
+                        const temp = pdfState.targetWidthMm;
+                        pdfState.targetWidthMm = pdfState.targetHeightMm;
+                        pdfState.targetHeightMm = temp;
+                    }
+                    printLine("Switched to Portrait orientation.", "text-success");
+                } else {
+                    const deg = parseInt(arg, 10);
+                    if ([0, 90, 180, 270].includes(deg)) {
+                        pdfState.rotation = deg;
+                        printLine(`Page rotation set to ${deg} degrees.`, "text-success");
+                    } else {
+                        printLine("ERROR: Rotation must be 0, 90, 180, 270, landscape, or portrait.", "text-error");
+                        return;
+                    }
+                }
+                reportTargetUpdated();
+            }
+            function scaleDimension(args) {
+                if (args.length < 1) {
+                    printLine("Usage: scale <percentage> (e.g. scale 110% or scale 90)", "text-dim");
+                    return;
+                }
+                let pctStr = args[0].replace('%', '');
+                let pct = parseFloat(pctStr);
+                if (isNaN(pct) || pct <= 0) {
+                    printLine("ERROR: Percentage must be a positive number.", "text-error");
+                    return;
+                }
+                const factor = pct / 100.0;
+                pdfState.targetWidthMm *= factor;
+                pdfState.targetHeightMm *= factor;
+                printLine(`Scaled target dimensions by ${pct}%`, "text-success");
+                reportTargetUpdated();
             }
             function setFitMode(args) {
                 if (args.length < 1) {
-                    printLine(`Current fit mode: '${pdfState.fitMode}'`);
-                    printLine("Usage: mode [fit|stretch|center]", "text-dim");
+                    printLine(`Current Scaling Mode: '${pdfState.fitMode}'`);
+                    printLine("  fit     - Maintain aspect ratio with clean margins (Default)");
+                    printLine("  stretch - Force stretch content to exact width and height");
+                    printLine("  center  - Keep original size, center on target canvas");
                     return;
                 }
-                const mode = args[0].toLowerCase();
-                if (['fit', 'stretch', 'center'].includes(mode)) {
-                    pdfState.fitMode = mode;
-                    printLine(`Fit mode updated to: '${mode}'`, "text-success");
+                const m = args[0].toLowerCase();
+                if (['fit', 'stretch', 'center'].includes(m)) {
+                    pdfState.fitMode = m;
+                    printLine(`Mode updated to: '${m}'`, "text-success");
                 } else {
-                    printLine("ERROR: Mode must be one of: fit, stretch, center.", "text-error");
+                    printLine("ERROR: Mode must be fit, stretch, or center.", "text-error");
                 }
                 printLine("");
             }
+            function setSyncBoxes(args) {
+                if (args.length < 1) {
+                    printLine(`All-Boxes Synchronization: ${pdfState.syncBoxes ? 'ENABLED' : 'DISABLED'}`);
+                    printLine("When enabled, MediaBox, CropBox, TrimBox, and BleedBox are set identically.", "text-dim");
+                    return;
+                }
+                const opt = args[0].toLowerCase();
+                if (['on', 'enable', 'true', '1'].includes(opt)) {
+                    pdfState.syncBoxes = true;
+                    printLine("Box synchronization ENABLED (Eliminates Acrobat trim errors).", "text-success");
+                } else if (['off', 'disable', 'false', '0'].includes(opt)) {
+                    pdfState.syncBoxes = false;
+                    printLine("Box synchronization DISABLED.", "text-warning");
+                } else {
+                    printLine("ERROR: Use 'boxes on' or 'boxes off'.", "text-error");
+                }
+                printLine("");
+            }
+            function setDisplayUnit(args) {
+                if (args.length < 1) {
+                    printLine(`Current Display Unit: '${pdfState.displayUnit}'`);
+                    return;
+                }
+                const u = args[0].toLowerCase();
+                if (['mm', 'pt', 'in'].includes(u)) {
+                    pdfState.displayUnit = u;
+                    printLine(`Unit changed to '${u}'`, "text-success");
+                    reportTargetUpdated();
+                } else {
+                    printLine("ERROR: Unit must be mm, pt, or in.", "text-error");
+                }
+            }
             function showStatus() {
-                printLine("CURRENT CONFIGURATION STATUS:", "text-bold");
-                printLine(`  Loaded File:      ${pdfState.fileName ? pdfState.fileName : '(None)'}`);
-                printLine(`  Page Count:       ${pdfState.pageCount}`);
-                printLine(`  Target Width:     ${pdfState.targetWidthMm.toFixed(2)} mm (${(pdfState.targetWidthMm * MM_TO_PT).toFixed(4)} pt)`);
-                printLine(`  Target Height:    ${pdfState.targetHeightMm.toFixed(2)} mm (${(pdfState.targetHeightMm * MM_TO_PT).toFixed(4)} pt)`);
-                printLine(`  Resize Mode:      ${pdfState.fitMode}`);
-                printLine(`  Processed State:  ${pdfState.processedBytes ? 'Ready for download' : 'Not processed yet'}`);
+                const finalW_mm = pdfState.targetWidthMm + pdfState.adjustWidthMm;
+                const finalH_mm = pdfState.targetHeightMm + pdfState.adjustHeightMm;
+                const finalW_pt = finalW_mm * MM_TO_PT;
+                const finalH_pt = finalH_mm * MM_TO_PT;
+                printLine("CURRENT CONFIGURATION STATE:", "text-bold");
+                printLine(`  Loaded File:        ${pdfState.fileName ? pdfState.fileName : '(No file loaded)'}`);
+                printLine(`  Total Pages:        ${pdfState.pageCount}`);
+                printLine(`  Base Target Size:   ${pdfState.targetWidthMm.toFixed(3)} mm x ${pdfState.targetHeightMm.toFixed(3)} mm`);
+                printLine(`  Adjust Offset:      W=${pdfState.adjustWidthMm >= 0 ? '+' : ''}${pdfState.adjustWidthMm.toFixed(2)} mm, H=${pdfState.adjustHeightMm >= 0 ? '+' : ''}${pdfState.adjustHeightMm.toFixed(2)} mm`);
+                printLine(`  FINAL OUTPUT SIZE:  ${finalW_mm.toFixed(3)} mm x ${finalH_mm.toFixed(3)} mm`);
+                printLine(`  Point Dimensions:   ${finalW_pt.toFixed(4)} pt x ${finalH_pt.toFixed(4)} pt`);
+                printLine(`  Page Rotation:      ${pdfState.rotation}°`);
+                printLine(`  Fit Strategy:       ${pdfState.fitMode}`);
+                printLine(`  Sync PDF Boxes:     ${pdfState.syncBoxes ? 'ON (Media/Crop/Trim/Bleed aligned)' : 'OFF'}`);
+                printLine(`  Processed Buffer:   ${pdfState.processedBytes ? 'Ready for download' : 'Not executed'}`);
+                printLine("");
+            }
+            function reportTargetUpdated() {
+                const finalW_mm = pdfState.targetWidthMm + pdfState.adjustWidthMm;
+                const finalH_mm = pdfState.targetHeightMm + pdfState.adjustHeightMm;
+                const finalW_pt = finalW_mm * MM_TO_PT;
+                const finalH_pt = finalH_mm * MM_TO_PT;
+                if (pdfState.displayUnit === 'pt') {
+                    printLine(`Target Size: ${finalW_pt.toFixed(2)} pt x ${finalH_pt.toFixed(2)} pt (${finalW_mm.toFixed(2)} mm x ${finalH_mm.toFixed(2)} mm)`);
+                } else if (pdfState.displayUnit === 'in') {
+                    printLine(`Target Size: ${(finalW_mm / 25.4).toFixed(3)} in x ${(finalH_mm / 25.4).toFixed(3)} in (${finalW_mm.toFixed(2)} mm x ${finalH_mm.toFixed(2)} mm)`);
+                } else {
+                    printLine(`Target Size: ${finalW_mm.toFixed(3)} mm x ${finalH_mm.toFixed(3)} mm (${finalW_pt.toFixed(2)} pt x ${finalH_pt.toFixed(2)} pt)`);
+                }
                 printLine("");
             }
             async function convertPdf() {
                 if (!pdfState.pdfDoc) {
-                    printLine("ERROR: No PDF file loaded. Please use 'upload' command first.", "text-error");
+                    printLine("ERROR: No PDF file loaded. Please use 'open' or drag a PDF file first.", "text-error");
                     return;
                 }
-                printLine("Processing PDF high-precision resizing...", "text-dim");
+                printLine("Executing ultra-precision PDF page resizing...", "text-dim");
                 try {
-                    const targetW_pt = pdfState.targetWidthMm * MM_TO_PT;
-                    const targetH_pt = pdfState.targetHeightMm * MM_TO_PT;
+                    const finalW_mm = pdfState.targetWidthMm + pdfState.adjustWidthMm;
+                    const finalH_mm = pdfState.targetHeightMm + pdfState.adjustHeightMm;
+                    const targetW_pt = finalW_mm * MM_TO_PT;
+                    const targetH_pt = finalH_mm * MM_TO_PT;
                     const newPdf = await PDFLib.PDFDocument.create();
                     const srcPdf = await PDFLib.PDFDocument.load(pdfState.fileBuffer);
                     const pageIndices = srcPdf.getPageIndices();
@@ -445,6 +688,16 @@
                         const origW = embeddedPage.width;
                         const origH = embeddedPage.height;
                         const newPage = newPdf.addPage([targetW_pt, targetH_pt]);
+                        if (pdfState.rotation !== 0) {
+                            newPage.setRotation(PDFLib.degrees(pdfState.rotation));
+                        }
+                        if (pdfState.syncBoxes) {
+                            newPage.setMediaBox(0, 0, targetW_pt, targetH_pt);
+                            newPage.setCropBox(0, 0, targetW_pt, targetH_pt);
+                            newPage.setBleedBox(0, 0, targetW_pt, targetH_pt);
+                            newPage.setTrimBox(0, 0, targetW_pt, targetH_pt);
+                            newPage.setArtBox(0, 0, targetW_pt, targetH_pt);
+                        }
                         let drawW = targetW_pt;
                         let drawH = targetH_pt;
                         let posX = 0;
@@ -474,24 +727,27 @@
                         });
                     }
                     pdfState.processedBytes = await newPdf.save();
-                    printLine("SUCCESS: PDF conversion completed with zero millimeter scale distortion!", "text-success");
-                    printLine(`  Output Page Count: ${embeddedPages.length}`);
-                    printLine(`  Output Size:       ${pdfState.targetWidthMm.toFixed(2)} mm x ${pdfState.targetHeightMm.toFixed(2)} mm`);
-                    printLine("Type 'download' to save the resulting PDF file.");
+                    printLine("SUCCESS: Conversion completed with 0.00mm box alignment!", "text-success");
+                    printLine(`  Total Pages:   ${embeddedPages.length}`);
+                    printLine(`  Output Size:   ${finalW_mm.toFixed(3)} mm x ${finalH_mm.toFixed(3)} mm`);
+                    printLine(`  Point Box:     ${targetW_pt.toFixed(4)} pt x ${targetH_pt.toFixed(4)} pt`);
+                    printLine("Type 'download' to save the output PDF file.");
                 } catch (err) {
-                    printLine(`ERROR: Conversion failed. ${err.message}`, "text-error");
+                    printLine(`ERROR: PDF Processing failed. ${err.message}`, "text-error");
                 }
                 printLine("");
             }
             function downloadPdf(args) {
                 if (!pdfState.processedBytes) {
-                    printLine("ERROR: No converted PDF ready. Run 'convert' command first.", "text-error");
+                    printLine("ERROR: No processed PDF ready. Run 'convert' command first.", "text-error");
                     return;
                 }
+                const finalW_mm = pdfState.targetWidthMm + pdfState.adjustWidthMm;
+                const finalH_mm = pdfState.targetHeightMm + pdfState.adjustHeightMm;
                 let outputName = args[0];
                 if (!outputName) {
                     const baseName = pdfState.fileName ? pdfState.fileName.replace(/\.pdf$/i, '') : 'resized';
-                    outputName = `${baseName}_${pdfState.targetWidthMm.toFixed(0)}x${pdfState.targetHeightMm.toFixed(0)}mm.pdf`;
+                    outputName = `${baseName}_${finalW_mm.toFixed(1)}x${finalH_mm.toFixed(1)}mm.pdf`;
                 } else if (!outputName.toLowerCase().endsWith('.pdf')) {
                     outputName += '.pdf';
                 }
@@ -503,30 +759,42 @@
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    printLine(`SUCCESS: Downloaded file as '${outputName}'`, "text-success");
+                    printLine(`SUCCESS: Saved '${outputName}' to downloads.`, "text-success");
                 } catch (err) {
                     printLine(`ERROR: Download failed. ${err.message}`, "text-error");
                 }
                 printLine("");
             }
+            function resetState() {
+                pdfState.targetWidthMm = 210.0;
+                pdfState.targetHeightMm = 297.0;
+                pdfState.adjustWidthMm = 0.0;
+                pdfState.adjustHeightMm = 0.0;
+                pdfState.rotation = 0;
+                pdfState.fitMode = 'fit';
+                pdfState.syncBoxes = true;
+                pdfState.processedBytes = null;
+                printLine("Configuration reset to default A4 (210 x 297 mm).", "text-success");
+                printLine("");
+            }
             function setTheme(args) {
                 if (args.length < 1) {
-                    printLine("Usage: theme <green|amber|cyan|white>", "text-dim");
+                    printLine("Usage: theme <green|amber|cyan|white|matrix>", "text-dim");
                     return;
                 }
                 const color = args[0].toLowerCase();
-                if (['green', 'amber', 'cyan', 'white'].includes(color)) {
+                if (['green', 'amber', 'cyan', 'white', 'matrix'].includes(color)) {
                     document.body.className = `theme-${color}`;
-                    printLine(`Theme changed to '${color}'.`, "text-success");
+                    printLine(`Terminal theme changed to '${color}'.`, "text-success");
                 } else {
-                    printLine("ERROR: Available themes are: green, amber, cyan, white.", "text-error");
+                    printLine("ERROR: Options are: green, amber, cyan, white, matrix.", "text-error");
                 }
                 printLine("");
             }
             function showHistory() {
                 printLine("COMMAND HISTORY:", "text-bold");
                 if (commandHistory.length === 0) {
-                    printLine("  (No commands executed yet)");
+                    printLine("  (No commands executed)");
                 } else {
                     commandHistory.forEach((cmdStr, idx) => {
                         printLine(`  ${(idx + 1).toString().padStart(3, ' ')}  ${cmdStr}`);
@@ -535,12 +803,11 @@
                 printLine("");
             }
             function showAbout() {
-                printLine("ABOUT PDF RESIZER CUI TOOL", "text-bold");
-                printLine("  Engine:       pdf-lib (Browser-side assembly)");
-                printLine("  UI Design:    Classic Monochrome Terminal CUI");
-                printLine("  Precision:    72 / 25.4 Points-per-Millimeter double precision (Floating-Point)");
-                printLine("  Error Margin: < 0.000000000001 pt (Negligible)");
-                printLine("  Privacy:      100% Client-side. No PDF files are uploaded to any server.");
+                printLine("CALIBRATION & PRECISION DETAILS:", "text-bold");
+                printLine("  Precision Ratio:  360.0 / 127.0 Points-per-Millimeter (Exact)");
+                printLine("  JIS Standard:     Full Japanese Industrial Standard B-Series included.");
+                printLine("  Box Syncing:      Simultaneously aligns MediaBox, CropBox, TrimBox, BleedBox.");
+                printLine("  Server Security:  100% Client-side. Files never leave your browser.");
                 printLine("");
             }
             function autoCompleteCommand() {
@@ -551,7 +818,7 @@
                     inputEl.value = matches[0] + ' ';
                 } else if (matches.length > 1) {
                     printLine('pdf-resizer> ' + current, 'text-bold');
-                    printLine('Matches: ' + matches.join('  '), 'text-dim');
+                    printLine('Suggestions: ' + matches.join('  '), 'text-dim');
                     scrollToBottom();
                 }
             }
